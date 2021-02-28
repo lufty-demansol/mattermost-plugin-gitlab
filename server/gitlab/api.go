@@ -291,17 +291,55 @@ func (g *gitlab) GetYourAssignments(user *UserInfo) ([]*internGitlab.Issue, erro
 	var errRequest error
 
 	if g.gitlabGroup == "" {
-		result, _, errRequest = client.Issues.ListIssues(&internGitlab.ListIssuesOptions{
-			AssigneeID: &user.GitlabUserID,
-			State:      &opened,
-			Scope:      &scope,
-		})
+		var r []*internGitlab.Issue
+		var resp *internGitlab.Response
+
+		for pageNumber := 1; ; pageNumber++ {
+			r, resp, errRequest = client.Issues.ListIssues(&internGitlab.ListIssuesOptions{
+				AssigneeID: &user.GitlabUserID,
+				State:      &opened,
+				Scope:      &scope,
+				ListOptions: internGitlab.ListOptions{
+					Page:    pageNumber,
+					PerPage: 100,
+				},
+			})
+
+			if errRequest != nil {
+				return r, errRequest
+			}
+			result = append(result, r...)
+			pages := resp.TotalPages
+			if pageNumber >= pages {
+				break
+			}
+
+		}
 	} else {
-		result, _, errRequest = client.Issues.ListGroupIssues(g.gitlabGroup, &internGitlab.ListGroupIssuesOptions{
-			AssigneeID: &user.GitlabUserID,
-			State:      &opened,
-			Scope:      &scope,
-		})
+		var r []*internGitlab.Issue
+		var resp *internGitlab.Response
+
+		for pageNumber := 1; ; pageNumber++ {
+			result, resp, errRequest = client.Issues.ListGroupIssues(g.gitlabGroup, &internGitlab.ListGroupIssuesOptions{
+				AssigneeID: &user.GitlabUserID,
+				State:      &opened,
+				Scope:      &scope,
+				ListOptions: internGitlab.ListOptions{
+					Page:    pageNumber,
+					PerPage: 100,
+				},
+			})
+
+			if errRequest != nil {
+				return r, errRequest
+			}
+			result = append(result, r...)
+			pages := resp.TotalPages
+			if pageNumber >= pages {
+				break
+			}
+
+		}
 	}
 
 	return result, errRequest
