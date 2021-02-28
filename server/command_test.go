@@ -361,7 +361,7 @@ func TestAddWebhookCommand(t *testing.T) {
 			api.On("build", mock.Anything, mock.Anything).Return(conf)
 			p.SetAPI(api)
 
-			got := p.webhookCommand(test.parameters, &gitlab.UserInfo{})
+			got := p.webhookCommand(test.parameters, &gitlab.UserInfo{}, true)
 
 			assert.Equal(t, test.want, got)
 		})
